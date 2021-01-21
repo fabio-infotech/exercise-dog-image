@@ -5,11 +5,23 @@ class App extends React.Component {
     super(props);
     this.state = {
       data: '',
+      name: '',
+      array: [],
     };
     this.fetchDog = this.fetchDog.bind(this);
+    this.saveData = this.saveData(this);
   }
 
   componentDidMount() {
+    const { data } = this.state;
+    if(data.message)
+    {
+      if (localStorage.dogURL) {
+        const parseStorage = JSON.parse(localStorage.dogURL);
+        const lastDog = parseStorage[parseStorage.length - 1].message;
+        return this.setState({ data: { message: lastDog } });
+      }
+    }
     this.fetchDog();
   }
 
@@ -20,11 +32,13 @@ class App extends React.Component {
     return true;
   }
 
-  componentDidUpdate() {
-    const { data } = this.state;
-    localStorage.setItem('dogURL', data.message);
-    const dogBreed = data.message.split('/'[4]);
-    alert(dogBreed);
+  componentDidUpdate(prevProps, prevState) {
+    const { data, array } = this.state;
+    if (prevState.data !== data) {        
+      const dogBreed = data.message.split('/'[4]);
+      alert(dogBreed);
+    }
+    localStorage.setItem('dogURL', JSON.stringify(array));
   }
 
   fetchDog() {
@@ -33,15 +47,36 @@ class App extends React.Component {
       .then(result => this.setState({ data: result }));
   }
 
+  saveData() {
+    const {
+      data: { message },
+      name,
+      array,
+    } = this.state;
+    const dogData = { message, name };
+    const newArray = [...array, dogData];
+    this.setState({ array: newArray });
+    this.setState({ name: '' });
+  }
+
   render() {
-    const { data } = this.state;
+    const { data, name } = this.state;
     if (data === '') return 'loading...';
     return (
       <div>
         <p>Doguinhos</p>
         <button onClick={this.fetchDog}>Novo doguinho!</button>
         <div>
-          <img src={this.state.data.message} alt='Dog'/>
+          <input
+            type="text"
+            value={name}
+            onChange={e => this.setState({ name: e.target.value })}
+            placeholder="digite o nome do doguinho"
+          />
+          <button onClick={this.saveData}>Salvar doguinho!</button>
+        </div>
+        <div>
+          <img src={data.message} alt={data.message}/>
         </div>
       </div>
     );
